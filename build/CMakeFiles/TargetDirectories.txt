@@ -1,0 +1,3 @@
+D:/TrainPhaseSplitWithTinyDNN/build/CMakeFiles/TrainPhaseSplitWithTinyDNN.dir
+D:/TrainPhaseSplitWithTinyDNN/build/CMakeFiles/ALL_BUILD.dir
+D:/TrainPhaseSplitWithTinyDNN/build/CMakeFiles/ZERO_CHECK.dir
