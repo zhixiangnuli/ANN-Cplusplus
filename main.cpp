@@ -57,7 +57,7 @@ Eigen::MatrixXd pick_data( Eigen::MatrixXd& matrix )
     for ( int i = 0; i < matrix.cols(); ++i )
     {
         // if ( ( matrix.col( i ).topRows( ncomps ).array() < 1.0e-06 ).any() ) continue;
-        if ( matrix( ncomps + 1, i ) < 1.0e-06 || matrix( ncomps + 1, i ) > 1.0 - 1.0e-06 )
+        if ( matrix( ncomps + 1, i ) < 1.0e-06 || matrix( ncomps + 1, i ) > ( 1.0 - 1.0e-06 ) )
             continue;
         if ( ( matrix.col( i ).bottomRows( ncomps ).array() < 1.0e-30 ).any() ) continue;
         if ( ( abs( log( matrix.col( i ).bottomRows( ncomps ).array() ) ) < 1.0e-05 ).any() )
@@ -70,25 +70,30 @@ Eigen::MatrixXd pick_data( Eigen::MatrixXd& matrix )
 
 Eigen::MatrixXd transform_data( Eigen::MatrixXd& matrix )
 {
-    int ncomps = matrix.rows() / 2 - 1;
-
+    int                 ncomps = matrix.rows() / 2 - 1;
+    std::vector<double> max, min;
+    for ( int i = 0; i < matrix.rows(); i++ )
+    {
+        max.push_back( matrix.row( i ).maxCoeff() );
+        min.push_back( matrix.row( i ).minCoeff() );
+    }
     for ( int i = 0; i < ncomps + 2; ++i )
     {
-        double max = matrix.row( i ).maxCoeff();
-        double min = matrix.row( i ).minCoeff();
+        // double max = matrix.row( i ).maxCoeff();
+        // double min = matrix.row( i ).minCoeff();
 
-        matrix.array().row( i ) -= min;
-        matrix.array().row( i ) /= max - min;
+        matrix.array().row( i ) -= min[i];
+        matrix.array().row( i ) /= max[i] - min[i];
     }
 
     for ( int i = ncomps + 2; i < matrix.rows(); ++i )
     {
-        double max = matrix.row( i ).maxCoeff();
-        double min = matrix.row( i ).minCoeff();
+        // double max = matrix.row( i ).maxCoeff();
+        // double min = matrix.row( i ).minCoeff();
 
         matrix.array().row( i ) = log( matrix.array().row( i ) );
-        matrix.array().row( i ) -= log( min );
-        matrix.array().row( i ) /= log( max ) - log( min );
+        matrix.array().row( i ) -= log( min[i] );
+        matrix.array().row( i ) /= log( max[i] ) - log( min[i] );
         matrix.array().row( i ) = sqrt( matrix.array().row( i ) );
     }
 
