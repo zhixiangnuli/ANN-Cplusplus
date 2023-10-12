@@ -46,7 +46,8 @@ Eigen::MatrixXd load_csv( const std::string& path, int columns )
     }
 
     std::fclose( file );
-    return Eigen::Map<Eigen::MatrixXd>( values.data(), values.size() / columns - 1, columns );
+    return Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>(
+        values.data(), values.size() / columns, columns );
 }
 
 Eigen::MatrixXd pick_data( Eigen::MatrixXd& matrix )
@@ -63,6 +64,7 @@ Eigen::MatrixXd pick_data( Eigen::MatrixXd& matrix )
         if ( ( abs( log( matrix.col( i ).bottomRows( ncomps ).array() ) ) < 1.0e-05 ).any() )
             continue;
         index.push_back( i );
+        std::cout << matrix.col( i ) << std::endl;
     }
 
     return matrix( Eigen::all, index );
@@ -102,6 +104,10 @@ Eigen::MatrixXd transform_data( Eigen::MatrixXd& matrix )
 
 int main( int argc, char* argv[] )
 {
+    std::vector<float> test_vector = { 2, 1, 3 };
+    float*             test_array  = test_vector.data();
+    Eigen::MatrixXf    test        = Eigen::Map<Eigen::Matrix<float, 3, 1>>( test_array );
+    std::cout << test.col( 0 ) << std::endl;
     if ( argc > 2 )
     {
         const int ncomps = std::stoi( argv[1] );
@@ -134,7 +140,12 @@ int main( int argc, char* argv[] )
         CustomCallback callback;
         net.set_callback( callback );
 
-        Eigen::MatrixXd raw   = load_csv( argv[2], 2 * ( ncomps + 1 ) ).transpose();
+        Eigen::MatrixXd raw = load_csv( argv[2], 2 * ( ncomps + 1 ) );
+        for ( int i = 0; i < raw.rows(); i++ )
+            std::cout << raw.row( i ) << std::endl;
+
+        raw = raw.transpose();
+
         Eigen::MatrixXd train = transform_data( pick_data( raw ) );
         net.fit( opt, train.topRows( ncomps + 1 ), train.bottomRows( ncomps + 1 ), 3000, 5000 );
     }
