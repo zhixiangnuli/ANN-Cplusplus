@@ -50,7 +50,7 @@ Eigen::MatrixXd load_csv( const std::string& path, int columns )
         values.data(), values.size() / columns, columns );
 }
 
-Eigen::MatrixXd pick_data( Eigen::MatrixXd& matrix )
+Eigen::MatrixXd pick_data( Eigen::MatrixXd& matrix, double* max, double* min )
 {
     int ncomps = matrix.rows() / 2 - 1;
 
@@ -64,21 +64,20 @@ Eigen::MatrixXd pick_data( Eigen::MatrixXd& matrix )
         if ( ( abs( log( matrix.col( i ).bottomRows( ncomps ).array() ) ) < 1.0e-05 ).any() )
             continue;
         index.push_back( i );
-        std::cout << matrix.col( i ) << std::endl;
     }
 
-    return matrix( Eigen::all, index );
+    Eigen::MatrixXd temp = matrix( Eigen::all, index );
+    for ( int i = 0; i < temp.rows(); ++i )
+    {
+        if ( temp.row( i ).maxCoeff() > max[i] ) max[i] = temp.row( i ).maxCoeff();
+        if ( temp.row( i ).minCoeff() < min[i] ) min[i] = temp.row( i ).minCoeff();
+    }
+    return temp;
 }
 
-Eigen::MatrixXd transform_data( Eigen::MatrixXd& matrix )
+Eigen::MatrixXd transform_data( Eigen::MatrixXd& matrix, double* max, double* min )
 {
-    int                 ncomps = matrix.rows() / 2 - 1;
-    std::vector<double> max, min;
-    for ( int i = 0; i < matrix.rows(); i++ )
-    {
-        max.push_back( matrix.row( i ).maxCoeff() );
-        min.push_back( matrix.row( i ).minCoeff() );
-    }
+    int ncomps = matrix.rows() / 2 - 1;
     for ( int i = 0; i < ncomps + 2; ++i )
     {
         // double max = matrix.row( i ).maxCoeff();
@@ -104,49 +103,52 @@ Eigen::MatrixXd transform_data( Eigen::MatrixXd& matrix )
 
 int main( int argc, char* argv[] )
 {
-    std::vector<float> test_vector = { 2, 1, 3 };
-    float*             test_array  = test_vector.data();
-    Eigen::MatrixXf    test        = Eigen::Map<Eigen::Matrix<float, 3, 1>>( test_array );
-    std::cout << test.col( 0 ) << std::endl;
     if ( argc > 2 )
     {
         const int ncomps = std::stoi( argv[1] );
         assert( ncomps > 1 );
+        double* max = new double[2 * ncomps + 2];
+        double* min = new double[2 * ncomps + 2];
+        std::fill( max, max + 2 * ncomps + 2, std::numeric_limits<double>::epsilon() );
+        std::fill( min, min + 2 * ncomps + 2, std::numeric_limits<double>::infinity() );
 
         std::filesystem::path file( argv[2] );
         std::filesystem::path dir = file.parent_path();
-
         if ( !dir.empty() )
         {
             std::cout << "Switch working directory to \"" << dir << "\"" << std::endl;
             std::filesystem::current_path( file.parent_path() );
         }
+        Eigen::MatrixXd raw = load_csv( argv[2], 2 * ( ncomps + 1 ) ).transpose();
+        std::cout << raw.col( 0 ) << std::endl;
+        Eigen::MatrixXd train = pick_data( raw, max, min );
 
+
+        raw                  = load_csv( argv[3], 2 * ( ncomps + 1 ) ).transpose();
+        Eigen::MatrixXd test = pick_data( raw, max, min );
+
+
+        raw                 = load_csv( argv[4], 2 * ( ncomps + 1 ) ).transpose();
+        Eigen::MatrixXd val = pick_data( raw, max, min );
+
+        transform_data( train, max, min );
+        transform_data( test, max, min );
+        transform_data( val, max, min );
+        std::cout << val.col( 100 ) << std::endl;
         MiniDNN::Layer*  layer1 = new MiniDNN::FullyConnected<MiniDNN::Softmax>( ncomps + 1, 10 );
         MiniDNN::Layer*  layer2 = new MiniDNN::FullyConnected<MiniDNN::Softmax>( 10, 10 );
         MiniDNN::Layer*  layer3 = new MiniDNN::FullyConnected<MiniDNN::Softmax>( 10, ncomps + 1 );
         MiniDNN::Output* output = new MiniDNN::RegressionMSE();
-
         MiniDNN::Network net;
         net.add_layer( layer1 );
         net.add_layer( layer2 );
         net.add_layer( layer3 );
         net.set_output( output );
         net.init();
-
-        MiniDNN::Adam opt;
-        opt.m_lrate = 0.001;
-
         CustomCallback callback;
         net.set_callback( callback );
-
-        Eigen::MatrixXd raw = load_csv( argv[2], 2 * ( ncomps + 1 ) );
-        for ( int i = 0; i < raw.rows(); i++ )
-            std::cout << raw.row( i ) << std::endl;
-
-        raw = raw.transpose();
-
-        Eigen::MatrixXd train = transform_data( pick_data( raw ) );
+        MiniDNN::Adam opt;
+        opt.m_lrate = 0.1;
         net.fit( opt, train.topRows( ncomps + 1 ), train.bottomRows( ncomps + 1 ), 3000, 5000 );
     }
     else
