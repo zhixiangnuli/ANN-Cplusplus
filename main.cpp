@@ -103,6 +103,7 @@ Eigen::MatrixXd transform_data( Eigen::MatrixXd& matrix, double* max, double* mi
 
 int main( int argc, char* argv[] )
 {
+    std::srand( 123 );
     if ( argc > 2 )
     {
         const int ncomps = std::stoi( argv[1] );
@@ -119,8 +120,8 @@ int main( int argc, char* argv[] )
             std::cout << "Switch working directory to \"" << dir << "\"" << std::endl;
             std::filesystem::current_path( file.parent_path() );
         }
-        Eigen::MatrixXd raw = load_csv( argv[2], 2 * ( ncomps + 1 ) ).transpose();
-        std::cout << raw.col( 0 ) << std::endl;
+
+        Eigen::MatrixXd raw   = load_csv( argv[2], 2 * ( ncomps + 1 ) ).transpose();
         Eigen::MatrixXd train = pick_data( raw, max, min );
 
 
@@ -134,7 +135,7 @@ int main( int argc, char* argv[] )
         transform_data( train, max, min );
         transform_data( test, max, min );
         transform_data( val, max, min );
-        std::cout << val.col( 100 ) << std::endl;
+        std::cout << train.col( 0 ) << std::endl;
         MiniDNN::Layer*  layer1 = new MiniDNN::FullyConnected<MiniDNN::Softmax>( ncomps + 1, 10 );
         MiniDNN::Layer*  layer2 = new MiniDNN::FullyConnected<MiniDNN::Softmax>( 10, 10 );
         MiniDNN::Layer*  layer3 = new MiniDNN::FullyConnected<MiniDNN::Softmax>( 10, ncomps + 1 );
@@ -144,12 +145,17 @@ int main( int argc, char* argv[] )
         net.add_layer( layer2 );
         net.add_layer( layer3 );
         net.set_output( output );
-        net.init();
+        net.init( 0, 0.01, 123 );
         CustomCallback callback;
         net.set_callback( callback );
-        MiniDNN::Adam opt;
-        opt.m_lrate = 0.1;
-        net.fit( opt, train.topRows( ncomps + 1 ), train.bottomRows( ncomps + 1 ), 3000, 5000 );
+        MiniDNN::Adam opt( 0.1, 1e-7 );
+
+        net.fit( opt, train.topRows( ncomps + 1 ), train.bottomRows( ncomps + 1 ), 3000, 500, 123 );
+        // train.bottomRows( ncomps + 1 ) = net.predict( train.topRows( ncomps + 1 ) );
+        std::cout << val.col( 0 ).topRows( ncomps + 1 ) << std::endl;
+        std::cout << val.col( 0 ).bottomRows( ncomps + 1 ) << std::endl;
+        std::cout << net.predict( val.col( 0 ).topRows( ncomps + 1 ) ) << std::endl;
+        std::cout << net.predict( val.col( 15 ).topRows( ncomps + 1 ) ) << std::endl;
     }
     else
     {
