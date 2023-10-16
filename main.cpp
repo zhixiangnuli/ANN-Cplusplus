@@ -135,7 +135,7 @@ int main( int argc, char* argv[] )
         transform_data( train, max, min );
         transform_data( test, max, min );
         transform_data( val, max, min );
-        std::cout << train.col( 0 ) << std::endl;
+        // std::cout << train.col( 0 ) << std::endl;
         MiniDNN::Layer*  layer1 = new MiniDNN::FullyConnected<MiniDNN::Softmax>( ncomps + 1, 10 );
         MiniDNN::Layer*  layer2 = new MiniDNN::FullyConnected<MiniDNN::Softmax>( 10, 10 );
         MiniDNN::Layer*  layer3 = new MiniDNN::FullyConnected<MiniDNN::Softmax>( 10, ncomps + 1 );
