@@ -66,7 +66,7 @@ Eigen::MatrixXd pick_data( Eigen::MatrixXd& matrix, double* max, double* min )
         index.push_back( i );
     }
 
-    Eigen::MatrixXd temp = matrix( Eigen::all, index );
+    Eigen::MatrixXd temp = matrix( Eigen::placeholders::all, index );
     for ( int i = 0; i < temp.rows(); ++i )
     {
         if ( temp.row( i ).maxCoeff() > max[i] ) max[i] = temp.row( i ).maxCoeff();

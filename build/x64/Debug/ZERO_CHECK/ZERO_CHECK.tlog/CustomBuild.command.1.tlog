@@ -1,6 +1,6 @@
-^D:\TRAINPHASESPLITWITHTINYDNN\BUILD\CMAKEFILES\703042E4519B8FD01F2CEB2933F8C902\GENERATE.STAMP.RULE
+^C:\PROJECTS\ANN-CPLUSPLUS\BUILD\CMAKEFILES\A3895B4A5160966B7C83EC4184BDAF0F\GENERATE.STAMP.RULE
 setlocal
-"C:\Program Files\CMake\bin\cmake.exe" -SD:/TrainPhaseSplitWithTinyDNN -BD:/TrainPhaseSplitWithTinyDNN/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file D:/TrainPhaseSplitWithTinyDNN/build/TrainPhaseSplitWithTinyDNN.sln
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Projects/ANN-Cplusplus -BC:/Projects/ANN-Cplusplus/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Projects/ANN-Cplusplus/build/TrainPhaseSplitWithTinyDNN.sln
 if %errorlevel% neq 0 goto :cmEnd
 :cmEnd
 endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone

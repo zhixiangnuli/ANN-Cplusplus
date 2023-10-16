@@ -110,6 +110,8 @@
         "resumable": "cpp",
         "hash_map": "cpp",
         "qr": "cpp",
-        "cholesky": "cpp"
+        "cholesky": "cpp",
+        "ranges": "cpp",
+        "*.inc": "cpp"
     }
 }

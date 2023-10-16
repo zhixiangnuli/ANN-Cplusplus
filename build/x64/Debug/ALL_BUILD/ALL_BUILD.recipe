@@ -2,13 +2,13 @@
 <Project>
   <ProjectOutputs>
     <ProjectOutput>
-      <FullPath>D:\TrainPhaseSplitWithTinyDNN\build\x64\Debug\ZERO_CHECK</FullPath>
+      <FullPath>C:\Projects\ANN-Cplusplus\build\x64\Debug\ZERO_CHECK</FullPath>
     </ProjectOutput>
     <ProjectOutput>
-      <FullPath>D:\TrainPhaseSplitWithTinyDNN\build\Debug\TrainPhaseSplitWithTinyDNN.exe</FullPath>
+      <FullPath>C:\Projects\ANN-Cplusplus\build\Debug\TrainPhaseSplitWithTinyDNN.exe</FullPath>
     </ProjectOutput>
     <ProjectOutput>
-      <FullPath>D:\TrainPhaseSplitWithTinyDNN\build\x64\Debug\ALL_BUILD</FullPath>
+      <FullPath>C:\Projects\ANN-Cplusplus\build\x64\Debug\ALL_BUILD</FullPath>
     </ProjectOutput>
   </ProjectOutputs>
   <ContentFiles />
