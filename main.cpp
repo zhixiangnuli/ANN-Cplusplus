@@ -106,7 +106,8 @@ int main( int argc, char* argv[] )
     std::srand( 123 );
     if ( argc > 2 )
     {
-        const int ncomps = std::stoi( argv[1] );
+        const int train_numbers = 5;
+        const int ncomps        = std::stoi( argv[1] );
         assert( ncomps > 1 );
         double* max = new double[2 * ncomps + 2];
         double* min = new double[2 * ncomps + 2];
@@ -157,7 +158,22 @@ int main( int argc, char* argv[] )
         net.set_callback( callback );
         MiniDNN::Adam opt( 0.1, 1e-7 );
 
-        net.fit( opt, train.topRows( ncomps + 1 ), train.bottomRows( ncomps + 1 ), 3000, 500, 123 );
+        std::vector<std::vector<MiniDNN::Scalar>> paras, paras_opt;
+        double test_loss = 0.0, test_loss_opt = std::numeric_limits<double>::infinity();
+        for ( int i = 0; i < train_numbers; i++ )
+        {
+            net.fit( opt, train.topRows( ncomps + 1 ), train.bottomRows( ncomps + 1 ),
+                     test.topRows( ncomps + 1 ), test.bottomRows( ncomps + 1 ),
+                     val.topRows( ncomps + 1 ), val.bottomRows( ncomps + 1 ), 3000, 5000, 500, 100,
+                     0.03, 123, paras, test_loss );
+            if ( test_loss < test_loss_opt )
+            {
+                paras_opt = paras;
+            }
+        }
+        net.set_parameters( paras_opt );
+        std::cout << val.col( 0 ).bottomRows( ncomps + 1 ) << std::endl;
+        std::cout << net.predict( val.col( 0 ).topRows( ncomps + 1 ) ) << std::endl;
     }
     else
     {

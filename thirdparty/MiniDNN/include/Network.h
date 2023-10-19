@@ -412,8 +412,13 @@ public:
     ///
     template <typename DerivedX, typename DerivedY>
     bool fit( Optimizer& opt, const Eigen::MatrixBase<DerivedX>& x,
-              const Eigen::MatrixBase<DerivedY>& y, int batch_size, int epoch, int seed = -1 )
+              const Eigen::MatrixBase<DerivedY>& y, const Eigen::MatrixBase<DerivedX>& xt,
+              const Eigen::MatrixBase<DerivedY>& yt, const Eigen::MatrixBase<DerivedX>& xv,
+              const Eigen::MatrixBase<DerivedY>& yv, int batch_size, int epoch, int min_epoch,
+              int GL_epoch_strip, double GL, int seed = -1,
+              std::vector<std::vector<MiniDNN::Scalar>>& paras = nullptr, double test_loss = 0.0 )
     {
+
         // We do not directly use PlainObjectX since it may be row-majored if x is passed as
         // mat.transpose() We want to force XType and YType to be column-majored
         typedef typename Eigen::MatrixBase<DerivedX>::PlainObject PlainObjectX;
@@ -448,11 +453,32 @@ public:
         m_callback->m_nbatch = nbatch;
         m_callback->m_nepoch = epoch;
 
+        double test_loss_min = std::numeric_limits<double>::infinity();
+        double val_loss_min  = std::numeric_limits<double>::infinity();
+        double test_loss_opt = std::numeric_limits<double>::infinity();
+        double val_loss_opt  = std::numeric_limits<double>::infinity();
+        double val_loss;
+
         // Iterations on the whole data set
+
         for ( int k = 0; k < epoch; k++ )
         {
-            m_callback->m_epoch_id = k;
+            val_loss = ( yv - ( this->predict( xv ) ) ).squaredNorm() / yv.cols() * 0.5;
+            if ( k % GL_epoch_strip == 0 && k > min_epoch )
+            {
+                if ( val_loss_opt > ( 1 + GL ) * val_loss_min ) return true;
+                val_loss_opt = val_loss;
+            }
 
+            if ( val_loss_min > val_loss )
+            {
+                paras        = this->get_parameters();
+                test_loss    = ( yt - ( this->predict( xt ) ) ).squaredNorm() / yt.cols() * 0.5;
+                val_loss_min = val_loss;
+            }
+            if ( val_loss_opt > val_loss ) val_loss_opt = val_loss;
+
+            m_callback->m_epoch_id = k;
             // Train on each mini-batch
             for ( int i = 0; i < nbatch; i++ )
             {
