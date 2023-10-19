@@ -135,8 +135,9 @@ public:
         {
             throw std::invalid_argument( "[class FullyConnected]: Parameter size does not match" );
         }
-
-        std::copy( param.begin(), param.begin() + m_weight.size(), m_weight.data() );
+        Eigen::MatrixXd temp = m_weight.transpose();
+        std::copy( param.begin(), param.begin() + m_weight.size(), temp.data() );
+        m_weight = temp.transpose();
         std::copy( param.begin() + m_weight.size(), param.end(), m_bias.data() );
     }
 

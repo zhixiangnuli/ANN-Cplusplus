@@ -8,9 +8,9 @@
             "program": "${command:cmake.launchTargetPath}",
             "args": [
                 "3",
-                "C:\\Projects\\ANN-Cplusplus\\dataset\\PM-simplex-T450-simplex-SPLIT-PM.csv",
-                "C:\\Projects\\ANN-Cplusplus\\dataset\\PM-simplex-T450-test-simplex-SPLIT-PM.csv",
-                "C:\\Projects\\ANN-Cplusplus\\dataset\\PM-simplex-T450-val-simplex-SPLIT-PM.csv"
+                "D:\\Projects\\ANN-Cplusplus\\dataset\\PM-simplex-T450-simplex-SPLIT-PM.csv",
+                "D:\\Projects\\ANN-Cplusplus\\dataset\\PM-simplex-T450-test-simplex-SPLIT-PM.csv",
+                "D:\\Projects\\ANN-Cplusplus\\dataset\\PM-simplex-T450-val-simplex-SPLIT-PM.csv"
             ],
             "cwd": "${workspaceRoot}",
             "console": "integratedTerminal",
