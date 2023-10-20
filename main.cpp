@@ -153,15 +153,17 @@ int main( int argc, char* argv[] )
         net.add_layer( layer2 );
         net.add_layer( layer3 );
         net.set_output( output );
-        net.init( 0, 0.01, 123 );
+
         CustomCallback callback;
         net.set_callback( callback );
-        MiniDNN::Adam opt( 0.1, 1e-7 );
+
 
         std::vector<std::vector<MiniDNN::Scalar>> paras, paras_opt;
         double test_loss = 0.0, test_loss_opt = std::numeric_limits<double>::infinity();
         for ( int i = 0; i < train_numbers; i++ )
         {
+            net.init( 0, 0.01, 123 );
+            MiniDNN::Adam opt( 0.1, 1e-7 );
             net.fit( opt, train.topRows( ncomps + 1 ), train.bottomRows( ncomps + 1 ),
                      test.topRows( ncomps + 1 ), test.bottomRows( ncomps + 1 ),
                      val.topRows( ncomps + 1 ), val.bottomRows( ncomps + 1 ), 3000, 5000, 500, 100,
@@ -172,8 +174,9 @@ int main( int argc, char* argv[] )
             }
         }
         net.set_parameters( paras_opt );
-        std::cout << val.col( 0 ).bottomRows( ncomps + 1 ) << std::endl;
-        std::cout << net.predict( val.col( 0 ).topRows( ncomps + 1 ) ) << std::endl;
+        std::cout << ( val.bottomRows( ncomps + 1 ) - net.predict( val.topRows( ncomps + 1 ) ) )
+                             .squaredNorm() /
+                         val.cols() * 0.5;
     }
     else
     {
