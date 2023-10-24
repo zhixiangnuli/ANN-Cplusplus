@@ -460,20 +460,31 @@ public:
         double val_loss;
 
         // Iterations on the whole data set
-
+        // int epoch_num;
         for ( int k = 0; k < epoch; k++ )
         {
-            val_loss = ( yv - ( this->predict( xv ) ) ).squaredNorm() / yv.cols() * 0.5;
-            if ( k % GL_epoch_strip == 0 && k > min_epoch )
+
+            // std::cout << yv.size() << std::endl;
+
+            val_loss = ( yv - ( this->predict( xv ) ) ).squaredNorm() / yv.size();
+            if ( k % GL_epoch_strip == 0 && k > min_epoch - 1 )
             {
-                if ( val_loss_opt > ( 1 + GL ) * val_loss_min ) return true;
+                if ( val_loss_opt > ( 1 + GL ) * val_loss_min )
+                {
+                    // std::cout << val_loss_opt << std::endl;
+                    // std::cout << "The  epoch num of best error: " << epoch_num << std::endl;
+                    // std::cout << val_loss_min << std::endl;
+                    // system( "pause" );
+                    return true;
+                }
                 val_loss_opt = val_loss;
             }
 
             if ( val_loss_min > val_loss )
             {
+                // epoch_num    = k;
                 paras        = this->get_parameters();
-                test_loss    = ( yt - ( this->predict( xt ) ) ).squaredNorm() / yt.cols() * 0.5;
+                test_loss    = ( yt - ( this->predict( xt ) ) ).squaredNorm() / yt.size();
                 val_loss_min = val_loss;
             }
             if ( val_loss_opt > val_loss ) val_loss_opt = val_loss;

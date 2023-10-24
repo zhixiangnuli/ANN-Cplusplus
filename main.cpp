@@ -162,21 +162,32 @@ int main( int argc, char* argv[] )
         double test_loss = 0.0, test_loss_opt = std::numeric_limits<double>::infinity();
         for ( int i = 0; i < train_numbers; i++ )
         {
+
+            // Eigen::MatrixXd temp( 2, 2 );
+            // temp << 1, 2, 3, 4;
+            // std::cout << temp.norm() << std::endl;
+            // std::cout << temp.squaredNorm() << std::endl;
             net.init( 0, 0.01, 123 );
             MiniDNN::Adam opt( 0.1, 1e-7 );
             net.fit( opt, train.topRows( ncomps + 1 ), train.bottomRows( ncomps + 1 ),
                      test.topRows( ncomps + 1 ), test.bottomRows( ncomps + 1 ),
-                     val.topRows( ncomps + 1 ), val.bottomRows( ncomps + 1 ), 3000, 5000, 500, 100,
+                     val.topRows( ncomps + 1 ), val.bottomRows( ncomps + 1 ), 3000, 5000, 300, 50,
                      0.03, 123, paras, test_loss );
             if ( test_loss < test_loss_opt )
             {
-                paras_opt = paras;
+                paras_opt     = paras;
+                test_loss_opt = test_loss;
             }
         }
         net.set_parameters( paras_opt );
+        std::cout << ( test.bottomRows( ncomps + 1 ) - net.predict( test.topRows( ncomps + 1 ) ) )
+                             .squaredNorm() /
+                         test.size()
+                  << std::endl;
         std::cout << ( val.bottomRows( ncomps + 1 ) - net.predict( val.topRows( ncomps + 1 ) ) )
                              .squaredNorm() /
-                         val.cols() * 0.5;
+                         val.size()
+                  << std::endl;
     }
     else
     {
