@@ -127,8 +127,8 @@ void transform_data_back( Eigen::MatrixXd& matrix, double* max, double* min )
     int ncomps = matrix.rows() / 2 - 1;
     for ( int i = 0; i < ncomps + 2; ++i )
     {
-        matrix.array().row( i ) += min[i];
         matrix.array().row( i ) *= max[i] - min[i];
+        matrix.array().row( i ) += min[i];
     }
     for ( int i = ncomps + 2; i < matrix.rows(); ++i )
     {
@@ -253,6 +253,7 @@ int main( int argc, char* argv[] )
         saveData( "train_pred.csv", train.transpose() );
         saveData( "test_pred.csv", test.transpose() );
         saveData( "val_pred.csv", val.transpose() );
+        net.export_net( "Modules", "0" );
     }
     else
     {
