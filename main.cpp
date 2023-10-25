@@ -29,8 +29,7 @@ public:
 
 void saveData( std::string fileName, Eigen::MatrixXd matrix )
 {
-    const static Eigen::IOFormat CSVFormat( Eigen::FullPrecision, Eigen::DontAlignCols, ", ",
-                                            "\n" );
+    const static Eigen::IOFormat CSVFormat( Eigen::FullPrecision, 0, ", ", "\n" );
 
     std::ofstream file( fileName );
     if ( file.is_open() )
@@ -106,34 +105,52 @@ Eigen::MatrixXd pick_data( Eigen::MatrixXd& matrix, double* max, double* min )
     return temp;
 }
 
-Eigen::MatrixXd transform_data( Eigen::MatrixXd& matrix, double* max, double* min )
+void transform_data( Eigen::MatrixXd& matrix, double* max, double* min )
 {
     int ncomps = matrix.rows() / 2 - 1;
     for ( int i = 0; i < ncomps + 2; ++i )
     {
-        // double max = matrix.row( i ).maxCoeff();
-        // double min = matrix.row( i ).minCoeff();
-
         matrix.array().row( i ) -= min[i];
         matrix.array().row( i ) /= max[i] - min[i];
     }
 
     for ( int i = ncomps + 2; i < matrix.rows(); ++i )
     {
-        // double max = matrix.row( i ).maxCoeff();
-        // double min = matrix.row( i ).minCoeff();
-
         matrix.array().row( i ) = log( matrix.array().row( i ) );
         matrix.array().row( i ) -= log( min[i] );
         matrix.array().row( i ) /= log( max[i] ) - log( min[i] );
         matrix.array().row( i ) = sqrt( matrix.array().row( i ) );
     }
-
-    return matrix;
 }
+void transform_data_back( Eigen::MatrixXd& matrix, double* max, double* min )
+{
+    int ncomps = matrix.rows() / 2 - 1;
+    for ( int i = 0; i < ncomps + 2; ++i )
+    {
+        matrix.array().row( i ) += min[i];
+        matrix.array().row( i ) *= max[i] - min[i];
+    }
+    for ( int i = ncomps + 2; i < matrix.rows(); ++i )
+    {
+        matrix.array().row( i ) = pow( ( matrix.array().row( i ) ), 2 );
+        matrix.array().row( i ) *= log( max[i] ) - log( min[i] );
+        matrix.array().row( i ) += log( min[i] );
+        matrix.array().row( i ) = exp( matrix.array().row( i ) );
+    }
+}
+
+
 
 int main( int argc, char* argv[] )
 {
+
+    // Eigen::MatrixXd fuck( 3, 3 );
+    // fuck << 1, 2, 3, 4, 5, 6, 7, 8, 9;
+    // std::cout << fuck << std::endl;
+    // fuck.array().row( 0 )        = exp( fuck.array().row( 0 ) );
+    // fuck.array().bottomRows( 2 ) = pow( fuck.array().bottomRows( 2 ), 2 );
+    // std::cout << fuck << std::endl;
+
     std::srand( 123 );
     if ( argc > 2 )
     {
@@ -153,28 +170,31 @@ int main( int argc, char* argv[] )
             std::filesystem::current_path( file.parent_path() );
         }
 
+        // Pick the two-phase data and calculate  maximum and minimum values of each parameter
         Eigen::MatrixXd raw   = load_csv( argv[2], 2 * ( ncomps + 1 ) ).transpose();
         Eigen::MatrixXd train = pick_data( raw, max, min );
+        raw                   = load_csv( argv[3], 2 * ( ncomps + 1 ) ).transpose();
+        Eigen::MatrixXd test  = pick_data( raw, max, min );
+        raw                   = load_csv( argv[4], 2 * ( ncomps + 1 ) ).transpose();
+        Eigen::MatrixXd val   = pick_data( raw, max, min );
 
+        // Save the raw picked data
+        saveData( "train.csv", train.transpose() );
+        saveData( "test.csv", test.transpose() );
+        saveData( "val.csv", val.transpose() );
 
-        raw                  = load_csv( argv[3], 2 * ( ncomps + 1 ) ).transpose();
-        Eigen::MatrixXd test = pick_data( raw, max, min );
-
-
-        raw                 = load_csv( argv[4], 2 * ( ncomps + 1 ) ).transpose();
-        Eigen::MatrixXd val = pick_data( raw, max, min );
-
+        // Transform data
         transform_data( train, max, min );
         transform_data( test, max, min );
         transform_data( val, max, min );
 
-        std::random_device r;
-        std::seed_seq      rng_seed{ r(), r(), r(), r(), r(), r(), r(), r() };
-        std::mt19937       eng1( rng_seed );
-        Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> perm( train.cols() );
-        perm.setIdentity();
-        std::shuffle( perm.indices().data(), perm.indices().data() + perm.indices().size(), eng1 );
-        train *= perm;
+        // std::random_device r;
+        // std::seed_seq      rng_seed{ r(), r(), r(), r(), r(), r(), r(), r() };
+        // std::mt19937       eng1( rng_seed );
+        // Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> perm( train.cols() );
+        // perm.setIdentity();
+        // std::shuffle( perm.indices().data(), perm.indices().data() + perm.indices().size(), eng1
+        // ); train *= perm;
         MiniDNN::Layer*  layer1 = new MiniDNN::FullyConnected<MiniDNN::Softmax>( ncomps + 1, 10 );
         MiniDNN::Layer*  layer2 = new MiniDNN::FullyConnected<MiniDNN::Softmax>( 10, 10 );
         MiniDNN::Layer*  layer3 = new MiniDNN::FullyConnected<MiniDNN::Identity>( 10, ncomps + 1 );
@@ -219,8 +239,15 @@ int main( int argc, char* argv[] )
                              .squaredNorm() /
                          val.size()
                   << std::endl;
-        Eigen::MatrixXd temp = net.predict( val.topRows( ncomps + 1 ) );
-        saveData( "prediction.csv", temp.transpose() );
+        train.bottomRows( ncomps + 1 ) = net.predict( train.topRows( ncomps + 1 ) );
+        test.bottomRows( ncomps + 1 )  = net.predict( test.topRows( ncomps + 1 ) );
+        val.bottomRows( ncomps + 1 )   = net.predict( val.topRows( ncomps + 1 ) );
+        transform_data_back( train, max, min );
+        transform_data_back( test, max, min );
+        transform_data_back( val, max, min );
+        saveData( "train_pred.csv", train.transpose() );
+        saveData( "test_pred.csv", test.transpose() );
+        saveData( "val_pred.csv", val.transpose() );
     }
     else
     {
