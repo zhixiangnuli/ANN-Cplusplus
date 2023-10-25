@@ -231,6 +231,10 @@ int main( int argc, char* argv[] )
             }
         }
         net.set_parameters( paras_opt );
+        std::cout << ( train.bottomRows( ncomps + 1 ) - net.predict( train.topRows( ncomps + 1 ) ) )
+                             .squaredNorm() /
+                         train.size()
+                  << std::endl;
         std::cout << ( test.bottomRows( ncomps + 1 ) - net.predict( test.topRows( ncomps + 1 ) ) )
                              .squaredNorm() /
                          test.size()
@@ -239,6 +243,7 @@ int main( int argc, char* argv[] )
                              .squaredNorm() /
                          val.size()
                   << std::endl;
+
         train.bottomRows( ncomps + 1 ) = net.predict( train.topRows( ncomps + 1 ) );
         test.bottomRows( ncomps + 1 )  = net.predict( test.topRows( ncomps + 1 ) );
         val.bottomRows( ncomps + 1 )   = net.predict( val.topRows( ncomps + 1 ) );
